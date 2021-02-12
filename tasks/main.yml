@@ -1,0 +1,68 @@
+---
+- name: Domain member required packages
+  yum:
+    name:
+      - adcli
+      - sssd
+      - realmd
+      - oddjob
+      - oddjob-mkhomedir
+      - krb5-workstation
+      - openldap-clients
+      - policycoreutils-python-utils
+      - samba-common-tools
+
+- name: Joined to domain check
+  stat:
+    path: /etc/krb5.keytab
+  register: domainjoined
+
+- name: Default Kerberos realm
+  ini_file:
+    path: /etc/krb5.conf
+    section: libdefaults
+    option: default_realm
+    value: "{{ domain_name }}"
+
+- name: Kerberos Configuration
+  when: domainjoined.stat.exists == false
+  template:
+    src: krb5-template.j2
+    dest: "/etc/krb5.conf.d/{{domain_name}}"
+    owner: root
+    group: root
+    mode: 0600
+    
+    - name: Join to domain
+  when: domainjoined.stat.exists == false
+  #shell: echo -n "{{ domain_join_pword }}" | adcli join --domain="{{ domain_name }}" --domain-ou="{{ default_ou }}" --login-user="{{ domain_join_user }}" --stdin-password
+  shell: echo -n "{{ domain_join_pword }}" | realm join "{{ domain_name }}" --computer-ou "{{ default_ou }}"  -U "{{ domain_join_user }}"
+
+- name: SSSD Configuration
+  register: sssdconf
+  template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+
+- name: PAM Configuration
+  when: domainjoined.stat.exists == false
+  shell: authselect select sssd --force
+
+- name: PAM Configuration2
+  when: domainjoined.stat.exists == false
+  shell: authselect select sssd with-mkhomedir
+
+  #- name: PAM Configuration2
+  #when: domainjoined.stat.exists == false
+  #shell: echo "sudoers:    files sss" >> /etc/nsswitch.conf
+
+- name: SSSD running
+  service:
+    name: sssd
+    state: restarted
+  when: sssdconf.changed
+
