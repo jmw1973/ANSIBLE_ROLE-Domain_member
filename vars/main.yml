@@ -1,0 +1,5 @@
+domain_name: test.com
+default_ou: OU=Management Linux,OU=Management Computers,OU=Management Cluster,DC=test,DC=com
+domain_join_user: svc_domjoin
+domain_join_pword: myreallyLongSecurePasswd!99
+sssd_allow_groups: grp_linux_admin
