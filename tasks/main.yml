@@ -9,7 +9,7 @@
       - oddjob-mkhomedir
       - krb5-workstation
       - openldap-clients
-      - policycoreutils-python-utils
+      - policycoreutils-python
       - samba-common-tools
 
 - name: Joined to domain check
@@ -48,13 +48,13 @@
     mode: '0600'
 
 
-- name: PAM Configuration
-  when: domainjoined.stat.exists == false
-  shell: authselect select sssd --force
+#- name: PAM Configuration
+#  when: domainjoined.stat.exists == false
+# shell: authselect select sssd --force
 
-- name: PAM Configuration2
-  when: domainjoined.stat.exists == false
-  shell: authselect select sssd with-mkhomedir
+#- name: PAM Configuration2
+# when: domainjoined.stat.exists == false
+#  shell: authselect select sssd with-mkhomedir
 
   #- name: PAM Configuration2
   #when: domainjoined.stat.exists == false
